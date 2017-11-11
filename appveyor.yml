@@ -1,0 +1,38 @@
+image: Visual Studio 2017
+clone_folder: c:\projects\JavaNNS
+configuration: Release
+
+environment:
+    global:
+    matrix:
+    - platform: cygwin64
+      CYGWIN_NOWINPATH: yes
+      CYGSH: C:\cygwin64\bin\bash -c
+    - platform: Win32
+      ANT_HOME: "C:\\ProgramData\\chocolatey\\lib\\ant\\apache-ant-1.10.1"
+
+install:
+  - if [%platform%]==[Win32] cinst cmake ant
+  - if [%platform%]==[Win32] SET "PATH=C:\Program Files\CMake\bin;%ANT_HOME%\\bin;%PATH%"
+  - if [%platform%]==[cygwin64] SET "PATH=C:\cygwin64\bin;C:\cygwin64\usr\bin;%PATH%"
+  - if [%platform%]==[cygwin64] SET PATH=%PATH:C:\Program Files\Git\usr\bin;=%
+  - git submodule -q update --init --recursive
+  - cd ..
+  - mkdir C:\projects\deps
+  - cd C:\projects\deps
+  - mkdir cygwin-downloads
+  - ps: if($env:platform -eq "cygwin64") { Invoke-WebRequest https://cygwin.com/setup-x86_64.exe -OutFile C:\projects\deps\cygwin-setup.exe }
+  - if [%platform%]==[cygwin64] C:\projects\deps\cygwin-setup.exe --quiet-mode --no-shortcuts --no-startmenu --no-desktop --upgrade-also --root C:\cygwin64 --local-package-dir C:\projects\deps\cygwin-downloads --packages gcc-g++,libopenmpi-devel,cmake,libboost-devel,libhdf5-devel,libfftw3-devel
+  - cd ..
+  - git clone https://github.com/Microsoft/vcpkg
+  - cd vcpkg
+  - if [%platform%]==[vs] powershell -exec bypass scripts\bootstrap.ps1
+  - if [%platform%]==[vs] vcpkg integrate install
+  - cd ..
+  - cd C:\projects\JavaNNS
+
+build_script:
+  - mkdir build
+  - cd build
+  - if [%platform%]==[cygwin64] %CYGSH% ant
+  - if [%platform%]==[Win32]    ant

@@ -1,0 +1,8 @@
+
+dist/
+JavaNNS.jar
+libSNNS_jkr.jnilib
+SNNS_jkr.dll
+libSNNS_jkr.so
+target.def
+
